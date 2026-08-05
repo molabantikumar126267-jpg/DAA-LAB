@@ -1,0 +1,89 @@
+import time
+
+# Linear Search Function
+def linear_search(arr, key):
+    for i in range(len(arr)):
+        if arr[i] == key:
+            return i
+    return -1
+
+# Binary Search Function
+def binary_search(arr, key):
+    low = 0
+    high = len(arr) - 1
+
+    while low <= high:
+        mid = (low + high) // 2
+
+        if arr[mid] == key:
+            return mid
+        elif arr[mid] < key:
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    return -1
+
+
+# User Input
+n = int(input("Enter the number of elements: "))
+
+arr = []
+print("Enter the elements:")
+for i in range(n):
+    arr.append(int(input()))
+
+key = int(input("Enter the element to search: "))
+
+print("\nChoose Search Method")
+print("1. Linear Search")
+print("2. Binary Search")
+choice = int(input("Enter your choice (1 or 2): "))
+
+# Perform Search
+if choice == 1:
+    start_time = time.perf_counter()
+
+    result = linear_search(arr, key)
+
+    end_time = time.perf_counter()
+
+    print("\n--- Linear Search Result ---")
+    if result != -1:
+        print(f"Element {key} found at index {result}.")
+    else:
+        print(f"Element {key} not found.")
+
+    print("\nTime Complexity:")
+    print("Best Case    : O(1)")
+    print("Average Case : O(n)")
+    print("Worst Case   : O(n)")
+
+elif choice == 2:
+    arr.sort()
+    print("\nSorted Array:", arr)
+
+    start_time = time.perf_counter()
+
+    result = binary_search(arr, key)
+
+    end_time = time.perf_counter()
+
+    print("\n--- Binary Search Result ---")
+    if result != -1:
+        print(f"Element {key} found at index {result} in the sorted array.")
+    else:
+        print(f"Element {key} not found.")
+
+    print("\nTime Complexity:")
+    print("Best Case    : O(1)")
+    print("Average Case : O(log n)")
+    print("Worst Case   : O(log n)")
+
+else:
+    print("Invalid choice!")
+    exit()
+
+# Display Execution Time
+execution_time = end_time - start_time
+print(f"\nExecution Time: {execution_time:.10f} seconds")
