@@ -1,0 +1,112 @@
+import heapq
+import time
+
+
+def prims_mst(graph, start_vertex=0):
+    """
+    Prim's Algorithm for finding the Minimum Spanning Tree (MST) of a graph.
+
+    Time Complexity: O(E log V) using Min-Heap
+    Space Complexity: O(V + E)
+
+    :param graph: Adjacency list representation of graph: {u: [(v, weight), ...]}
+    :param start_vertex: Starting vertex for Prim's algorithm
+    :return: (mst_edges, total_weight)
+    """
+    num_vertices = len(graph)
+    visited = [False] * num_vertices
+    mst_edges = []
+    total_weight = 0
+
+    # Min-Heap stores tuples of (weight, u, v) where u -> v with given weight
+    min_heap = []
+
+    # Start at start_vertex
+    visited[start_vertex] = True
+    for neighbor, weight in graph[start_vertex]:
+        heapq.heappush(min_heap, (weight, start_vertex, neighbor))
+
+    while min_heap and len(mst_edges) < num_vertices - 1:
+        weight, u, v = heapq.heappop(min_heap)
+
+        if visited[v]:
+            continue
+
+        # Include edge (u, v) in MST
+        visited[v] = True
+        mst_edges.append((u, v, weight))
+        total_weight += weight
+
+        # Add outgoing edges from newly visited vertex v
+        for neighbor, w in graph[v]:
+            if not visited[neighbor]:
+                heapq.heappush(min_heap, (w, v, neighbor))
+
+    return mst_edges, total_weight
+
+
+def main():
+    print("==================================================")
+    print("        PRIM'S MINIMUM SPANNING TREE (MST)         ")
+    print("==================================================")
+
+    # Default graph with 5 vertices (0 to 4)
+    # Graph structure:
+    # 0 --(2)-- 1, 0 --(3)-- 3
+    # 1 --(2)-- 0, 1 --(3)-- 2, 1 --(8)-- 4
+    # 2 --(3)-- 1, 2 --(6)-- 4, 2 --(7)-- 3
+    # 3 --(3)-- 0, 3 --(7)-- 2, 3 --(1)-- 4
+    # 4 --(8)-- 1, 4 --(6)-- 2, 4 --(1)-- 3
+    default_graph = {
+        0: [(1, 2), (3, 3)],
+        1: [(0, 2), (2, 3), (4, 8)],
+        2: [(1, 3), (3, 7), (4, 6)],
+        3: [(0, 3), (2, 7), (4, 1)],
+        4: [(1, 8), (2, 6), (3, 1)]
+    }
+
+    print("Default Graph Adjacency List:")
+    for u in default_graph:
+        neighbors_str = ", ".join([f"Node {v} (weight {w})" for v, w in default_graph[u]])
+        print(f"  Node {u} -> {neighbors_str}")
+
+    user_choice = input("\nUse custom input? (y/N): ").strip().lower()
+    if user_choice == 'y':
+        try:
+            num_nodes = int(input("Enter number of vertices: "))
+            num_edges = int(input("Enter number of edges: "))
+            graph = {i: [] for i in range(num_nodes)}
+            print("Enter edges in format 'u v weight':")
+            for _ in range(num_edges):
+                u, v, w = map(int, input("  Edge: ").split())
+                graph[u].append((v, w))
+                graph[v].append((u, w))
+        except Exception as e:
+            print(f"Invalid input ({e})! Falling back to default graph.")
+            graph = default_graph
+    else:
+        graph = default_graph
+
+    print("\n--- Running Prim's Algorithm ---")
+    start_time = time.perf_counter()
+    mst_edges, total_weight = prims_mst(graph, start_vertex=0)
+    end_time = time.perf_counter()
+    execution_time_ns = (end_time - start_time) * 1e9
+
+    print("\n========== MINIMUM SPANNING TREE EDGES ==========")
+    print(f"{'Step':<6} | {'Edge (u -> v)':<15} | {'Weight':<10}")
+    print("-" * 38)
+    for step, (u, v, w) in enumerate(mst_edges, 1):
+        print(f"{step:<6} | {f'{u} -- {v}':<15} | {w:<10}")
+    print("-" * 38)
+
+    print("\n========== RESULTS SUMMARY ==========")
+    print(f"Total Vertices (V)    : {len(graph)}")
+    print(f"MST Edge Count        : {len(mst_edges)}")
+    print(f"Total MST Weight      : {total_weight}")
+    print(f"Execution Time        : {execution_time_ns:.2f} ns")
+    print("======================================")
+
+
+if __name__ == "__main__":
+    main()
