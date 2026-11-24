@@ -1,0 +1,132 @@
+import time
+
+
+class DisjointSet:
+    """
+    Disjoint Set Union (DSU) Data Structure with Path Compression and Union by Rank.
+    """
+
+    def __init__(self, num_nodes):
+        self.parent = list(range(num_nodes))
+        self.rank = [0] * num_nodes
+
+    def find(self, i):
+        """Find root parent with Path Compression."""
+        if self.parent[i] == i:
+            return i
+        self.parent[i] = self.find(self.parent[i])
+        return self.parent[i]
+
+    def union(self, u, v):
+        """Union two sets by Rank. Returns True if united, False if already connected."""
+        root_u = self.find(u)
+        root_v = self.find(v)
+
+        if root_u != root_v:
+            if self.rank[root_u] < self.rank[root_v]:
+                self.parent[root_u] = root_v
+            elif self.rank[root_u] > self.rank[root_v]:
+                self.parent[root_v] = root_u
+            else:
+                self.parent[root_v] = root_u
+                self.rank[root_u] += 1
+            return True
+        return False
+
+
+def kruskals_mst(num_vertices, edges):
+    """
+    Kruskal's Algorithm for Minimum Spanning Tree.
+
+    Time Complexity: O(E log E) or O(E log V)
+    Space Complexity: O(V + E)
+
+    :param num_vertices: Number of vertices in the graph
+    :param edges: List of tuples (u, v, weight)
+    :return: (mst_edges, total_weight, skipped_edges)
+    """
+    # Step 1: Sort all edges in non-decreasing order of weight
+    sorted_edges = sorted(edges, key=lambda item: item[2])
+
+    dsu = DisjointSet(num_vertices)
+    mst_edges = []
+    skipped_edges = []
+    total_weight = 0
+
+    # Step 2: Iterate through sorted edges and apply DSU
+    for u, v, weight in sorted_edges:
+        if dsu.union(u, v):
+            mst_edges.append((u, v, weight))
+            total_weight += weight
+            if len(mst_edges) == num_vertices - 1:
+                break
+        else:
+            skipped_edges.append((u, v, weight))
+
+    return mst_edges, total_weight, skipped_edges
+
+
+def main():
+    print("==================================================")
+    print("      KRUSKAL'S MINIMUM SPANNING TREE (MST)       ")
+    print("==================================================")
+
+    # Default graph edges (u, v, weight)
+    default_num_vertices = 6
+    default_edges = [
+        (0, 1, 4),
+        (0, 2, 4),
+        (1, 2, 2),
+        (1, 3, 6),
+        (2, 3, 8),
+        (2, 4, 9),
+        (3, 4, 7),
+        (3, 5, 5),
+        (4, 5, 10)
+    ]
+
+    print("Default Graph Edges:")
+    for u, v, w in default_edges:
+        print(f"  Edge ({u} -- {v}) with weight {w}")
+
+    user_choice = input("\nUse custom input? (y/N): ").strip().lower()
+    if user_choice == 'y':
+        try:
+            num_vertices = int(input("Enter number of vertices: "))
+            num_edges = int(input("Enter number of edges: "))
+            edges = []
+            print("Enter edges in format 'u v weight':")
+            for _ in range(num_edges):
+                u, v, w = map(int, input("  Edge: ").split())
+                edges.append((u, v, w))
+        except Exception as e:
+            print(f"Invalid input ({e})! Falling back to default graph.")
+            num_vertices, edges = default_num_vertices, default_edges
+    else:
+        num_vertices, edges = default_num_vertices, default_edges
+
+    print("\n--- Running Kruskal's Algorithm ---")
+    start_time = time.perf_counter()
+    mst_edges, total_weight, skipped = kruskals_mst(num_vertices, edges)
+    end_time = time.perf_counter()
+    execution_time_ns = (end_time - start_time) * 1e9
+
+    print("\n========== SELECTED MST EDGES ==========")
+    print(f"{'Step':<6} | {'Edge (u -- v)':<15} | {'Weight':<10}")
+    print("-" * 38)
+    for step, (u, v, w) in enumerate(mst_edges, 1):
+        print(f"{step:<6} | {f'{u} -- {v}':<15} | {w:<10}")
+    print("-" * 38)
+
+    print("\n========== RESULTS SUMMARY ==========")
+    print(f"Total Vertices (V)    : {num_vertices}")
+    print(f"Total Graph Edges (E) : {len(edges)}")
+    print(f"MST Edges Selected    : {len(mst_edges)}")
+    print(f"Edges Skipped (Cycles): {len(skipped)}")
+    print(f"Total MST Weight      : {total_weight}")
+    print(f"Execution Time        : {execution_time_ns:.2f} ns")
+    print("======================================")
+
+
+if __name__ == "__main__":
+    main()
