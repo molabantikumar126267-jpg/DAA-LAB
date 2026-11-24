@@ -1,0 +1,161 @@
+import itertools
+import time
+
+INF = float('inf')
+
+
+def tsp_held_karp(matrix):
+    """
+    Dynamic Programming (Held-Karp algorithm) using Bitmask state representation.
+
+    Given an N x N distance matrix, finds the minimum cost Hamiltonian cycle
+    that visits every city exactly once and returns to the starting city 0.
+
+    Time Complexity: O(n^2 * 2^n)
+    Space Complexity: O(n * 2^n)
+
+    :param matrix: 2D distance matrix matrix[i][j]
+    :return: (min_cost, tour_path)
+    """
+    n = len(matrix)
+    ALL_VISITED = (1 << n) - 1
+
+    # memo[mask][u] = min cost to visit remaining unvisited cities (represented by mask) starting from city u
+    memo = {}
+    parent = {}
+
+    def solve(mask, u):
+        if mask == ALL_VISITED:
+            return matrix[u][0]  # Return to start city 0
+
+        state = (mask, u)
+        if state in memo:
+            return memo[state]
+
+        min_cost = INF
+        best_next = -1
+
+        for v in range(n):
+            if not (mask & (1 << v)):  # If city v has not been visited
+                cost = matrix[u][v] + solve(mask | (1 << v), v)
+                if cost < min_cost:
+                    min_cost = cost
+                    best_next = v
+
+        memo[state] = min_cost
+        parent[state] = best_next
+        return min_cost
+
+    # Start at city 0 with mask (1 << 0)
+    min_cost = solve(1, 0)
+
+    # Reconstruct tour path
+    tour = [0]
+    curr_mask = 1
+    curr_node = 0
+
+    while curr_mask != ALL_VISITED:
+        next_node = parent.get((curr_mask, curr_node), -1)
+        if next_node == -1:
+            break
+        tour.append(next_node)
+        curr_mask |= (1 << next_node)
+        curr_node = next_node
+
+    tour.append(0)  # Return to start city
+    return min_cost, tour
+
+
+def tsp_brute_force(matrix):
+    """
+    Brute-Force solution for TSP evaluating all (n-1)! permutations.
+    Time Complexity: O(n!)
+    """
+    n = len(matrix)
+    cities = list(range(1, n))
+    min_cost = INF
+    best_tour = []
+
+    for perm in itertools.permutations(cities):
+        current_cost = matrix[0][perm[0]]
+        for i in range(len(perm) - 1):
+            current_cost += matrix[perm[i]][perm[i + 1]]
+        current_cost += matrix[perm[-1]][0]
+
+        if current_cost < min_cost:
+            min_cost = current_cost
+            best_tour = [0] + list(perm) + [0]
+
+    return min_cost, best_tour
+
+
+def main():
+    print("==================================================")
+    print("   TRAVELLING SALESMAN PROBLEM (HELD-KARP DP)    ")
+    print("==================================================")
+
+    # Default 4-city distance matrix
+    default_matrix = [
+        [0, 10, 15, 20],
+        [10, 0, 35, 25],
+        [15, 35, 0, 30],
+        [20, 25, 30, 0]
+    ]
+
+    print("Default Distance Matrix (4 Cities):")
+    n_default = len(default_matrix)
+    header = f"{'From\\To':<8}" + "".join([f"{'City ' + str(j):>10}" for j in range(n_default)])
+    print(header)
+    print("-" * len(header))
+    for i in range(n_default):
+        row = f"City {i:<3}"
+        for j in range(n_default):
+            row += f"{default_matrix[i][j]:>10}"
+        print(row)
+    print("-" * len(header))
+
+    user_choice = input("\nUse custom input? (y/N): ").strip().lower()
+    if user_choice == 'y':
+        try:
+            n = int(input("Enter number of cities: "))
+            print(f"Enter {n}x{n} distance matrix row by row:")
+            matrix = []
+            for i in range(n):
+                row = list(map(int, input(f"  Row {i}: ").split()))
+                matrix.append(row)
+        except Exception as e:
+            print(f"Invalid input ({e})! Falling back to default distance matrix.")
+            matrix = default_matrix
+    else:
+        matrix = default_matrix
+
+    n = len(matrix)
+
+    # DP Held-Karp Execution
+    print("\n--- Running Dynamic Programming (Held-Karp) Solver ---")
+    start_dp = time.perf_counter()
+    dp_cost, dp_tour = tsp_held_karp(matrix)
+    end_dp = time.perf_counter()
+    dp_time_ns = (end_dp - start_dp) * 1e9
+
+    # Brute Force Execution
+    print("--- Running Brute-Force Permutation Solver ---")
+    start_bf = time.perf_counter()
+    bf_cost, bf_tour = tsp_brute_force(matrix)
+    end_bf = time.perf_counter()
+    bf_time_ns = (end_bf - start_bf) * 1e9
+
+    print("\n========== OPTIMAL TOUR PATH ==========")
+    tour_str = " -> ".join([f"City {c}" for c in dp_tour])
+    print(f"Tour Path : {tour_str}")
+
+    print("\n========== RESULTS & METHOD COMPARISON ==========")
+    print(f"{'Method':<15} | {'Min Tour Cost':<15} | {'Execution Time (ns)':<20}")
+    print("-" * 55)
+    print(f"{'Held-Karp (DP)':<15} | {dp_cost:<15} | {dp_time_ns:<20.2f}")
+    print(f"{'Brute-Force':<15} | {bf_cost:<15} | {bf_time_ns:<20.2f}")
+    print("=" * 55)
+
+
+if __name__ == "__main__":
+    main()
